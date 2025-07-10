@@ -43,9 +43,7 @@ def collapse_genes_and_phenotypes(variants_table: pd.DataFrame, gene_list: list,
     # Collapse the number of variants per gene per individual
     variants_in_gene_list = variants_table[variants_table['Gene'].isin(
         gene_list)]
-    if variants_in_gene_list.empty:
-        raise ValueError(
-            f"No variants found in the provided gene list: {gene_list}")
+
     variants_in_gene_list = variants_in_gene_list[['SampleID', 'Gene']]
     collpased_genes = variants_in_gene_list.groupby(
         ['SampleID']).size().reset_index(name='GeneSet')

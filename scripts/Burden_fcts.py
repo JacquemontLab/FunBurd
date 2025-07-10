@@ -126,10 +126,12 @@ def run_logistic_regression_model(data, formula):
             return reg
 
     except Exception as e:
-        print(e)
         if e.args[0] == 'Singular matrix':
             print("Error: Singular matrix encountered. This usually means that there is a perfect multicollinearity in the data.")
             print("Please check your data and remove any redundant variables.")
+            return None
+        else:
+            print("Error: ", e)
             return None
 
 
