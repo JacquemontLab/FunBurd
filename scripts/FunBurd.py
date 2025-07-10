@@ -4,6 +4,8 @@ import scripts.Burden_fcts as Burden_fcts
 import scripts.data_preparation as data_preparation
 from joblib import Parallel, delayed
 from tqdm import tqdm
+from multiprocessing import Pool
+import time
 
 
 def FunBurd_one_gene_set(phenotype_table: pd.DataFrame,
@@ -57,8 +59,34 @@ def FunBurd_one_gene_set(phenotype_table: pd.DataFrame,
     # Compute the burden model
     model_result, log_model = Burden_fcts.prepare_and_run_model(
         annotated_collapsed_genes, options, keep_all_regression_results, list_covariantes, interaction_column, column_for_conditional)
-
+    print(log_model)
     return model_result
+
+
+def FunBurd_one_gene_set_wih_name(phenotype_table: pd.DataFrame,
+                                  phenotype_column_name: str,
+                                  variants_table: pd.DataFrame,
+                                  genes_item: list,
+                                  keep_all_regression_results: bool = False,
+                                  list_covariantes: list = None,
+                                  interaction_column: list = None,
+                                  column_for_conditional: str = None,
+                                  correction_outside_gene_set: dict = None):
+
+    result = FunBurd_one_gene_set(
+        phenotype_table=phenotype_table,
+        phenotype_column_name=phenotype_column_name,
+        variants_table=variants_table,
+        gene_list=genes_item[1],
+        keep_all_regression_results=keep_all_regression_results,
+        list_covariantes=list_covariantes,
+        interaction_column=interaction_column,
+        column_for_conditional=column_for_conditional,
+        correction_outside_gene_set=correction_outside_gene_set
+    )
+    result['Gene_set'] = genes_item[0]
+    result['Variable'] = result.index
+    return result
 
 
 def FunBurd_multiple_gene_sets(phenotype_table: pd.DataFrame,
@@ -69,39 +97,89 @@ def FunBurd_multiple_gene_sets(phenotype_table: pd.DataFrame,
                                list_covariantes: list = None,
                                interaction_column: list = None,
                                column_for_conditional: str = None,
+                               correction_outside_gene_set: dict = None,
                                n_cpus: int = 1):
 
     # Load the gene sets from the file
 
-    results = []
+    # Check if the number of CPUs is greater than 1 for parallel processing
+    if n_cpus < 1:
+        raise ValueError("Number of CPUs must be at least 1.")
+    if n_cpus == 1:
+        print("Running in single-threaded mode. For parallel processing, set n_cpus > 1.")
+
     if n_cpus > 1:
         gene_sets_items = list(gene_sets_dict.items())
 
-        results = Parallel(n_jobs=n_cpus, batch_size=4)(delayed(FunBurd_one_gene_set)(
+        results = Parallel(n_jobs=n_cpus, batch_size=4)(delayed(FunBurd_one_gene_set_wih_name)(
             phenotype_table=phenotype_table,
             phenotype_column_name=phenotype_column_name,
             variants_table=variants_table,
-            gene_list=genes,
+            genes_item=gene_set_item,
             keep_all_regression_results=keep_all_regression_results,
             list_covariantes=list_covariantes,
             interaction_column=interaction_column,
-            column_for_conditional=column_for_conditional) in tqdm(gene_sets_items, desc="Processing gene sets"))
+            column_for_conditional=column_for_conditional,
+            correction_outside_gene_set=correction_outside_gene_set) for gene_set_item in tqdm(gene_sets_items, desc="Processing gene sets"))
     else:
-        for gene_set_name, genes in gene_sets_dict.items():
-            print(f"Processing gene set: {gene_set_name}")
+        results = []
+        for gene_set_item in gene_sets_dict.items():
+            print(f"Processing gene set: {gene_set_item[0]}")
 
-            result = FunBurd_one_gene_set(
+            result = FunBurd_one_gene_set_wih_name(
                 phenotype_table=phenotype_table,
                 phenotype_column_name=phenotype_column_name,
                 variants_table=variants_table,
-                gene_list=genes,
+                genes_item=gene_set_item,
                 keep_all_regression_results=keep_all_regression_results,
                 list_covariantes=list_covariantes,
                 interaction_column=interaction_column,
-                column_for_conditional=column_for_conditional
+                column_for_conditional=column_for_conditional,
+                correction_outside_gene_set=correction_outside_gene_set
             )
-            result['Gene_set'] = gene_set_name
             results.append(result)
 
     results_df = pd.concat(results, ignore_index=True)
     return results_df
+
+
+def bootstraped_FunBurd(phenotype_table: pd.DataFrame,
+                        phenotype_column_name: str,
+                        variants_table: pd.DataFrame,
+                        gene_list: list,
+                        n_bootstrap: int = 1000,
+                        n_cpus: int = 1,
+                        seed: int = 42,
+                        bootstrap_size: int = None,
+                        keep_all_regression_results: bool = False,
+                        list_covariantes: list = None,
+                        interaction_column: list = None,
+                        column_for_conditional: str = None,
+                        correction_outside_gene_set: dict = None):
+
+    if bootstrap_size is None:
+        bootstrap_size = len(gene_list) / 2
+    else:
+        if bootstrap_size > len(gene_list):
+            raise ValueError(
+                "Bootstrap size cannot be larger than the number of genes in the gene list.")
+
+    # Create the bootstrap samples
+    bootstrap_samples = data_preparation.create_bootstrap_samples(
+        gene_list=gene_list,
+        n_bootstrap=n_bootstrap,
+        bootstrap_size=bootstrap_size,
+        seed=seed)
+
+    result = FunBurd_one_gene_set(
+        phenotype_table=phenotype_table,
+        phenotype_column_name=phenotype_column_name,
+        variants_table=variants_table,
+        gene_list=gene_list,
+        keep_all_regression_results=keep_all_regression_results,
+        list_covariantes=list_covariantes,
+        interaction_column=interaction_column,
+        column_for_conditional=column_for_conditional
+    )
+
+    return 'TODO'
