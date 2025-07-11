@@ -2,9 +2,49 @@
 ![FunBurd.png](FunBurd.png)
 
 ## Description
-Compute the functional burden of a biological function.
-## How to install
-#### Requirements
+Compute the functional burden of a biological function for a phenotype.
+
+## How to install:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/JacquemontLab/FunBurd.git
+   cd FunBurd
+   ```
+
+2. **Create a Virtual Environment (Optional but Recommended)**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. **Install the Required Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Install the Module**:
+   ```bash
+   pip install .
+   ```
+
+## Dependencies
+
+The module requires the following dependencies:
+- Python 3.8 or higher
+- pandas
+- numpy
+- scipy
+- statsmodels
+
+These dependencies will be automatically installed when you run `pip install -r requirements.txt`.
+
+## Usage
+
+After installation, you can import the module in your Python scripts:
+```python
+import FunBurd
+```
 
 ## Functions
 
