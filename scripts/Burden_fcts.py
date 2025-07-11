@@ -3,8 +3,6 @@ import pandas as pd
 import time
 import statsmodels.formula.api as sm
 from statsmodels.discrete.conditional_models import ConditionalLogit
-import gc
-
 
 import warnings
 from statsmodels.tools.sm_exceptions import PerfectSeparationWarning, ConvergenceWarning

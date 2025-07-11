@@ -6,9 +6,7 @@ import scripts.bootstap_functions as bootstrap_functions
 
 from joblib import Parallel, delayed
 from tqdm import tqdm
-import time
 import statsmodels.stats.multitest as ssm
-import itertools
 
 
 def FunBurd_one_gene_set(phenotype_table: pd.DataFrame,

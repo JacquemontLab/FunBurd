@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import pandas as pd
 import itertools
@@ -16,7 +15,7 @@ def create_bootstrap_samples(gene_list: list, n_bootstrap: int, bootstrap_size: 
     :return: A dictionary where keys are bootstrap sample identifiers and values are lists of genes in each sample.
     """
     if seed is not None:
-        random.seed(seed)
+        np.random.seed(seed)
 
     bootstrap_samples = []
     for _ in range(n_bootstrap):
